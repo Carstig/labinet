@@ -52,4 +52,9 @@ ensure you copy first all your images into `images` directory and let LabelImg t
 [Raccoon dataset](https://github.com/datitran/raccoon_dataset) downloaded xml_to_csv.py and put it into my repository - with adaptations for my repo. After conversion the aforementioned folder and path values are gone in the csv.
 
 ### Creating TFRecords from the LabelImg xml data
+I use [this script](https://github.com/datitran/raccoon_dataset/blob/master/generate_tfrecord.py) to create TFRecords. Change ` row_label == 'dog' ` 
+Open a anaconda window and switch to your tensorflow virtual env. (you need the tensorflow package installed), run (from within `$gitbase`/images ) 
 
+```
+python ..\scripts\generate_tfrecord.py --csv_input=..\data\train.csv --output_path=..\data\train.record
+``` 
