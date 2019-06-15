@@ -31,8 +31,8 @@ def xml_to_csv(path):
 
 
 def main():
-    directory = 'data'
-    filename = 'labinet.csv'
+    directory = 'test'
+    filename = 'test.csv'
     image_path = os.path.join(os.getcwd(), directory)
     xml_df = xml_to_csv(image_path)
     xml_df.to_csv(f'{directory}/{filename}', index=None)

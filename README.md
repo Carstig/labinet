@@ -46,15 +46,38 @@ After some googling I decide to follow [TensorFlow Object Detection API tutorial
 ### Labeling with labelImg
 ensure you copy first all your images into `images` directory and let LabelImg tool save the xml (label info) into the same directory. If you did the labeling before the move - this is ok. Do not care about the details contained in the xml files.
 
-[Object Detection Tutorial youtoube video](https://www.youtube.com/watch?v=kq2Gjv_pPe8&index=4&list=PLQVvvaa0QuDcNK5GeCQnxYnSSaar2tpku) mentions to copy your labeled images into train and test directories... hm... I would rather want to let the splitting being data within the python scripts.
+[Object Detection Tutorial youtoube video](https://www.youtube.com/watch?v=kq2Gjv_pPe8&index=4&list=PLQVvvaa0QuDcNK5GeCQnxYnSSaar2tpku) mentions to copy your labeled images into train and test directories... hm... I would rather want to let the splitting being data within the python scripts. _back from Training_ The retraining is based on a config file which wants us to do this. i.e. you need a `test.csv` and create the `test.record` file.
 
 #### xml to csv
 [Raccoon dataset](https://github.com/datitran/raccoon_dataset) downloaded xml_to_csv.py and put it into my repository - with adaptations for my repo. After conversion the aforementioned folder and path values are gone in the csv.
+Imho `xml_to_csv.py` is a bit "hardcoded". 
+- It contains the directory to search for the xml files
+- will put all xml into one csv (no train/test splitting)
+- the csv outfile is saved to hardcoded name
 
-### Creating TFRecords from the LabelImg xml data
+### Step 2 - Creating TFRecords from the LabelImg xml data
 I use [this script](https://github.com/datitran/raccoon_dataset/blob/master/generate_tfrecord.py) to create TFRecords. Change ` row_label == 'dog' ` 
 Open a anaconda window and switch to your tensorflow virtual env. (you need the tensorflow package installed), run (from within `$gitbase`/images ) 
 
 ```
 python ..\scripts\generate_tfrecord.py --csv_input=..\data\train.csv --output_path=..\data\train.record
 ``` 
+
+_I needed to do this from within the images directory as tensorflow starts reading the different jpg files_
+
+### Step 3 - Training
+I download [ssd_mobilenet_v1_coco.config](https://github.com/tensorflow/models/blob/master/research/object_detection/samples/configs/ssd_mobilenet_v1_coco.config)
+Save it into dir `training`. I also download the model itself (`ssd_mobilenet_v1_coco_2018_01_28.tar.gz`) and unpack it into `training/ssd_mobilenet_v1_coco`
+
+Put `object-detection.pbtxt` into dir `data`
+
+I follow the details steps from my selected [tutorial](https://becominghuman.ai/tensorflow-object-detection-api-tutorial-training-and-evaluating-custom-object-detector-ed2594afcf73) - I leave batch_size (as I have tf w/ gpu).
+
+
+>>> tutorial says copy it to objec_detection - but I did put my .config (and downloaded model) into train - wrong ? 
+
+### Step 4 Evaluate
+copy `eval.py` from `legacy` dir into `object_detection` dir
+``` 
+python eval.py --logtostderr --pipeline_config_path=training/ssd_mobilenet_v1_coco.config --checkpoint_dir=training/ --eval_dir=eval/
+```  
