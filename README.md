@@ -2,7 +2,6 @@
 A fun project to detect my Labrador dogs going onto our couch by applying AI image processing.
 
 Directory structure
-(following https://gist.github.com/ericmjl/27e50331f24db3e8f957d1fe7bbbe510 )
 
 notebooks 
 _contains prototyping code and jupyter notebooks using the framework_
@@ -78,6 +77,39 @@ I follow the details steps from my selected [tutorial](https://becominghuman.ai/
 
 ### Step 4 Evaluate
 copy `eval.py` from `legacy` dir into `object_detection` dir
+
+- need to install pycocoapi
+    - install [vs studio build env](https://go.microsoft.com/fwlink/?LinkId=691126)
+    - install git
+    - reopen conda prompt
+    - `pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI`
+
+- modify tensorflow-models:
+    - in `tensorflow-models\research\` delete or rename `pycocotools`
+    - in `object_detection_evaluation.py` replace `unicode()` with `str()`
+
+- start evaluation
 ``` 
 python eval.py --logtostderr --pipeline_config_path=training/ssd_mobilenet_v1_coco.config --checkpoint_dir=training/ --eval_dir=eval/
 ```  
+
+In case you get an `Image with id... already added` Error, you forgot to update in the .config file with the right number of examples. (must match number of test = evaluation images)
+
+```
+eval_config: {
+        #num of test images. In my case 71. Previously It was 8000
+        num_examples: 71
+``` 
+---> did not help
+
+
+### Step 5 Visualize Results
+```
+#To visualize the eval results
+tensorboard --logdir=eval/
+
+#TO visualize the training results
+tensorboard --logdir=training/
+```
+
+Eval results are horrible. Many boxes within one picture, and boxes with label=dog and a proba > 70% where no dog is.
