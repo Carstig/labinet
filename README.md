@@ -12,14 +12,16 @@ _actual sources implementing model and inference code_
 data
 _will have tf records and csv files_
 
-images
+images_train
+images_test
 _will contain our dataset (during work - not in git). I have not labeled all images, the ones I did have a `<imagename>.xml`_ I will not publish my full picture set due to privacy reasons. (my family is also visible ;-) - the dogs did not care about their privacy :-) )
+images_train should contain images for training and images_test should contain images for evaluation (aka test).
 
 scripts
-_well - contains scripts to manage conversion and training that are *not* python_
+_well - contains scripts to manage conversion and training_
 
 training
-_used to save our trained model and checkpoints_
+_used to save our pretrained model, config file and trained model and checkpoints_
 
 eval
 _save results of evaluation on our trained model_
@@ -141,6 +143,7 @@ I am now referencing to [2] and [10]
 python export_inference_graph.py --input_type image_tensor --pipeline_config_path training/ssd_mobilenet_v1_coco.config --trained_checkpoint_prefix training/model.ckpt-XXXX --output_directory inference_graph
 ``` 
 - check you have now `inference_graph/frozen_inference_graph.pb`
+- copy this directory now to `$gitbase`
 
 
 ### Step 7 Use your object-detection classifier to label pictures
@@ -155,7 +158,7 @@ TODO: notebook to visualize pictures with boxes to "sort" out wrong labeled pict
 
 [1]: [2019, Installing TensorFlow, Keras, & Python 3.7 in Windows](https://www.youtube.com/watch?v=59duINoc8GM) _these videos also exist for other OS. And he creates new ones every year - so search for the update_
 
-[2]: [How To Train an Object Detection Classifier Using TensorFlow](https://www.youtube.com/watch?v=Rgpfk6eYxJA) - also see [10] for the associated git rep
+[2]: [How To Train an Object Detection Classifier Using TensorFlow](https://www.youtube.com/watch?v=Rgpfk6eYxJA) - also see [10] for the associated git repo
 
 [3]: [Intro - TensorFlow Object Detection API](https://www.youtube.com/playlist?list=PLQVvvaa0QuDcNK5GeCQnxYnSSaar2tpku)
 
