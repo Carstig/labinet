@@ -81,3 +81,23 @@ def visualize_boxes_after_detection(image, inference_output_dict, category_index
 
     return image_np
 
+
+def get_boxes_to_use(detection_boxes, detection_scores, min_score_threshold=0.8):
+    '''
+    returns list of boxes that have score higher than min_score_threshold
+    @param detection_boxes result from inference
+    @param detection_scores result from inference
+    '''
+    boxes = detection_boxes
+    scores = detection_scores
+    #print(output_dict['detection_boxes'])
+    num_boxes = boxes.shape[0]    
+    boxes_to_use = []
+    for i in range(num_boxes):
+        if scores is None or scores[i] > min_score_threshold:
+            box = boxes[i]
+            boxes_to_use.append(box)       
+            #score = int(scores[i] * 100)
+            #print(f"Use box[{i}]={boxes[i]}. (score is {score}%)")
+    return boxes_to_use        
+
