@@ -57,6 +57,8 @@ ensure you copy first all your images into `images` directory and let LabelImg t
 
 [Object Detection Tutorial youtoube video](https://www.youtube.com/watch?v=kq2Gjv_pPe8&index=4&list=PLQVvvaa0QuDcNK5GeCQnxYnSSaar2tpku) mentions to copy your labeled images into train and test directories... hm... I would rather want to let the splitting being data within the python scripts. _back from Training_ The retraining is based on a config file which wants us to do this. i.e. you need a `test.csv` and create the `test.record` file.
 
+### Step 2 - Creating TFRecords from the LabelImg xml data
+
 #### xml to csv
 [Raccoon dataset](https://github.com/datitran/raccoon_dataset) downloaded xml_to_csv.py and put it into my repository - with adaptations for my repo. After conversion the aforementioned folder and path values are gone in the csv.
 Imho `xml_to_csv.py` is a bit "hardcoded". 
@@ -64,7 +66,7 @@ Imho `xml_to_csv.py` is a bit "hardcoded".
 - will put all xml into one csv (no train/test splitting)
 - the csv outfile is saved to hardcoded name
 
-### Step 2 - Creating TFRecords from the LabelImg xml data
+#### csv to TFRecords
 I use [this script](https://github.com/datitran/raccoon_dataset/blob/master/generate_tfrecord.py) to create TFRecords. Change ` row_label == 'dog' ` 
 Open a anaconda window and switch to your tensorflow virtual env. (you need the tensorflow package installed), run (from within `$gitbase`/images ) 
 
@@ -148,10 +150,40 @@ python export_inference_graph.py --input_type image_tensor --pipeline_config_pat
 
 ### Step 7 Use your object-detection classifier to label pictures
 
-TODO: write own script that creates xml format of labelImg!
-TODO: notebook to visualize pictures with boxes to "sort" out wrong labeled pictures
+- place some new pictures (as created in step 1) and place them in a new directory
+- i created a for loop to now run inference on the new graph and it will create xml files in the PascalVOC format (the one from LabelImg)
+```
+NEW_IMAGE_PATH = os.path.join(CWD_PATH, 'new_images')
+files = os.listdir(NEW_IMAGE_PATH)
 
-### Step 8 
+for fname in files:
+    if fname.endswith('jpg'):
+        image_file = os.path.join(NEW_IMAGE_PATH, fname)
+        print(f'inference on: {fname}')
+        image =  Image.open(image_file)
+        output_dict = labinet.object_detect.run_inference_for_single_image(image, detection_graph)
+        boxes = output_dict['detection_boxes']
+        scores = output_dict['detection_scores']
+        boxes_to_use = labinet.object_detect.get_boxes_to_use(boxes, scores)
+        boxes_normed = []
+        print(f'found {len(boxes_to_use)} objects')
+        for box in boxes_to_use:
+            box_normed = labinet.box.get_normalized_coordinates(box, image.size)
+            boxes_normed.append(box_normed)
+
+        xml = labinet.box.box_to_labelimg_xml(fname, image.size, boxes_normed, imagepath=image_file)
+        xmlfname = image_file[:-4]+".xml"
+        xml.write(xmlfname)
+
+``` 
+- open LabelImg and click through the pictures to see how good we do
+- in case of missing or bad box, correct it. Save the xml and note down the image name
+- copy the images noted above into the `images\train` directory
+- restart from Step 2
+
+### Step 8 use new model on live stream
+can we run inference on the raspi ?
+
 
 
 # Resources and Links
@@ -175,4 +207,28 @@ TODO: notebook to visualize pictures with boxes to "sort" out wrong labeled pict
 [9]: [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md)
 
 [10]: https://github.com/EdjeElectronics/TensorFlow-Object-Detection-API-Tutorial-Train-Multiple-Objects-Windows-10 
+
+
+
+# bad labeled images
+20190414173231-00
+20190414173232-00
+20190414173242-00
+20190414173243-00
+20190414173244-00
+20190414173245-00
+20190414173727-00
+20190414174049-00
+20190414174104-00
+20190414174108-00
+20190414174146-00
+20190414174154-00
+20190414174156-00
+20190414174202-00
+20190414174206-00
+
+
+
+
+
 
