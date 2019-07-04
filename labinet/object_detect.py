@@ -5,29 +5,23 @@ import tensorflow as tf
 import numpy as np
 from utils import visualization_utils as vis_util
 
-# from https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb
-def run_inference_for_single_image(image, graph):
-  '''
-  runs inference (object detection) on image and returns dict 
-  with num_detections, detection_classes, detection_masks, detection_boxes, detection_scores
-  @param image loaded as is
-  '''
-  image_np_exp = np.expand_dims(io_util.load_image_into_numpy_array(image), axis=0) 
-  with graph.as_default():
-    with tf.Session() as sess:
-      # Get handles to input and output tensors
-      ops = tf.get_default_graph().get_operations()
-      all_tensor_names = {output.name for op in ops for output in op.outputs}
-      tensor_dict = {}
-      for key in [
-          'num_detections', 'detection_boxes', 'detection_scores',
-          'detection_classes', 'detection_masks'
-      ]:
-        tensor_name = key + ':0'
-        if tensor_name in all_tensor_names:
-          tensor_dict[key] = tf.get_default_graph().get_tensor_by_name(
-              tensor_name)
-      if 'detection_masks' in tensor_dict:
+def get_tensor_dict(graph):
+    tensor_dict = {}
+    with graph.as_default():
+        ops = graph.get_operations()
+        all_tensor_names = {output.name for op in ops for output in op.outputs}
+        tensor_names = ['num_detections', 'detection_boxes', 'detection_scores','detection_classes', 'detection_masks', 'image_tensor']
+        for key in tensor_names:
+            tensor_name = key + ':0'
+            #print(f'get tensor:{tensor_name}')
+            if tensor_name in all_tensor_names:
+              print(f'set: {tensor_name}')
+              tensor_dict[key] = graph.get_tensor_by_name(tensor_name)
+    return tensor_dict        
+
+def set_detection_masks(image_width, image_height, tensor_dict):
+    print(f"tensor:0 for image.shape=(x={image_width},y={image_height})")
+    if 'detection_masks' in tensor_dict:
         # The following processing is only for single image
         detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
         detection_masks = tf.squeeze(tensor_dict['detection_masks'], [0])
@@ -36,26 +30,48 @@ def run_inference_for_single_image(image, graph):
         detection_boxes = tf.slice(detection_boxes, [0, 0], [real_num_detection, -1])
         detection_masks = tf.slice(detection_masks, [0, 0, 0], [real_num_detection, -1, -1])
         detection_masks_reframed = utils_ops.reframe_box_masks_to_image_masks(
-            detection_masks, detection_boxes, image_np_exp.shape[1], image_np_exp.shape[2])
-        detection_masks_reframed = tf.cast(
-            tf.greater(detection_masks_reframed, 0.5), tf.uint8)
+            detection_masks, detection_boxes, image_height, image_width)
+        detection_masks_reframed = tf.cast(tf.greater(detection_masks_reframed, 0.5), tf.uint8)
         # Follow the convention by adding back the batch dimension
-        tensor_dict['detection_masks'] = tf.expand_dims(
-            detection_masks_reframed, 0)
-      image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
+        print("reframed : ")
+        tensor_dict['detection_masks'] = tf.expand_dims(detection_masks_reframed, 0) 
 
-      # Run inference
-      output_dict = sess.run(tensor_dict,
-                             feed_dict={image_tensor: image_np_exp})
+def get_tensor_dict_with_masks(image_width, image_height, detection_graph):
+  tensor_dict = get_tensor_dict(detection_graph)
+  set_detection_masks(image_width, image_height, tensor_dict)
+  return tensor_dict
 
-      # all outputs are float32 numpy arrays, so convert types as appropriate
-      output_dict['num_detections'] = int(output_dict['num_detections'][0])
-      output_dict['detection_classes'] = output_dict[
-          'detection_classes'][0].astype(np.int64)
-      output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
-      output_dict['detection_scores'] = output_dict['detection_scores'][0]
-      if 'detection_masks' in output_dict:
-        output_dict['detection_masks'] = output_dict['detection_masks'][0]
+
+
+def convert_output_dict(output_dict):
+  # all outputs are float32 numpy arrays, so convert types as appropriate
+  output_dict['num_detections'] = int(output_dict['num_detections'][0])
+  output_dict['detection_classes'] = output_dict[
+      'detection_classes'][0].astype(np.int64)
+  output_dict['detection_boxes'] = output_dict['detection_boxes'][0]
+  output_dict['detection_scores'] = output_dict['detection_scores'][0]
+  if 'detection_masks' in output_dict:
+    output_dict['detection_masks'] = output_dict['detection_masks'][0]
+
+
+# from https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb
+def run_inference_for_single_image(image, graph):
+  '''
+  runs inference (object detection) on image and returns dict 
+  with num_detections, detection_classes, detection_masks, detection_boxes, detection_scores
+  @param image loaded as is
+  '''
+  image_np_exp = np.expand_dims(io_util.load_image_into_numpy_array(image), axis=0) 
+  tensor_dict = get_tensor_dict(graph)
+  set_detection_masks(image_width=image_np_exp.shape[2], image_height=image_np_exp.shape[1], tensor_dict=tensor_dict)
+  image_tensor = tensor_dict['image_tensor']
+
+  with tf.Session(graph=graph) as sess:
+    # Run inference
+    output_dict = sess.run(tensor_dict,
+                            feed_dict={image_tensor: image_np_exp})
+
+    convert_output_dict(output_dict)
   return output_dict
 
 
