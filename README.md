@@ -182,8 +182,54 @@ for fname in files:
 - restart from Step 2
 
 ### Step 8 use new model on live stream
-can we run inference on the raspi ?
+Object detection on Live Stream actually means, that we have a Loop to capture an image from a webcam and then apply _object detection on one image_ . 
 
+To make that actually perform, you need to have a better implementation than the `labinet.object_detect.run_inference_for_single_image(image, detection_graph)`
+
+Performance gains come from reusing a created tf.Session by:
+- move loading model outside function (and loop)
+- extracting tensors and preparing image tensors only once
+- creating session only once
+- reuse the session and call repeatedly ` output_dict = sess.run(tensor_dict, feed_dict={image_tensor: image_np_exp})`
+
+```
+# load model and labels
+detection_graph = load_model(PATH_TO_MODEL)
+categories, category_index = load_label_map(LABEL_MAP, NUM_CLASSES)
+
+# prepare tensor dict for inference
+tensor_dict = labinet.object_detect.get_tensor_dict_with_masks(IMAGE_SIZE[1], IMAGE_SIZE[0], detection_graph)
+image_tensor = tensor_dict['image_tensor']
+config = tf.ConfigProto()
+config.gpu_options.allow_growth=True
+
+# Prepare the Cam!
+video = cv2.VideoCapture(0)
+ret, frame = video.read()
+if frame is None:
+    print("Error - did you connect your webcam?")
+
+with tf.Session(graph=detection_graph, config=config) as sess:
+    # capture
+    while(True):
+        ret, frame = video.read()
+        #print(f"Captured frame.shape={frame.shape} - type(frame)={type(frame)}")
+        image_np_exp = np.expand_dims(frame, axis=0) 
+        #print(f'np-frame.shape={image_np_exp.shape}')
+        # inference
+        output_dict = sess.run(tensor_dict, feed_dict={image_tensor: image_np_exp})
+        labinet.object_detect.convert_output_dict(output_dict)
+        # visualize boxes
+        image_with_boxes = labinet.object_detect.visualize_boxes_after_detection(frame, output_dict, category_index)
+        # show image
+        cv2.imshow('Detection Running...', cv2.resize(image_with_boxes,(IMAGE_SIZE[1],IMAGE_SIZE[0])))
+        #cv2.waitKey(25)
+        if cv2.waitKey(25) == ord('q'):
+            break        
+
+video.release()
+cv2.destroyAllWindows()
+``` 
 
 
 # Resources and Links
