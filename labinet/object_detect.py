@@ -83,7 +83,8 @@ def visualize_boxes_after_detection(image, inference_output_dict, category_index
       @param image 
       @param score the minimum score so that a box is visualized
     '''
-    image_np = io_util.load_image_into_numpy_array(image)
+    #image_np = io_util.load_image_into_numpy_array(image)    
+    image_np = image
 
     vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
