@@ -12,8 +12,8 @@ _actual sources implementing model and inference code_
 data
 _will have tf records and csv files_
 
-images_train
-images_test
+images/train
+images/test
 _will contain our dataset (during work - not in git). I have not labeled all images, the ones I did have a `<imagename>.xml`_ I will not publish my full picture set due to privacy reasons. (my family is also visible ;-) - the dogs did not care about their privacy :-) )
 images_train should contain images for training and images_test should contain images for evaluation (aka test).
 
@@ -47,9 +47,21 @@ After some googling I decide to follow [TensorFlow Object Detection API tutorial
 #### Creating Images
 I created images by using my Raspi and it's cam following [4]. 
 
-I recommend to take a picture only every second (or even less). Either "objects" move so fast they become blurred (and more blurred pictures do not help), or they are so slow that within one second there is not much change in the object position or pose.
+I recommend to take a picture only every 5th (or even less). Either "objects" move so fast they become blurred (and more blurred pictures do not help), or they are so slow that within one second there is not much change in the object position or pose.
 
-_I took 5 pictures per seconds, ended up with 3000 pictures, which I labeled only about 300 from to have a good variance in what the pictures show._
+_I took 5 pictures per seconds, ended up with 3000 pictures, which I labeled only about 300 from to have a good variance in what the pictures show. In my second round I configured to have an img every 5th second - that was quite good, but when the dog is asleep you have lots of pretty identical images._
+
+If you have configured your cam//motion as deamon, the raspi will save pictures as soon as it is booted. Use `sudo service motion start | stop` to toggle this.
+
+In case not use this short command sequence to restart the image capturing:
+
+1. Enable camera with `sudo raspi-config`
+    1. go to `Interfaces`
+    2. select camera and enable it
+2. Take one picture `raspistill -o test.jpg`
+
+It is quite handy to configure _motion_ to open the image stream on a webinterface.
+You can then check the created images under `http://<raspi-ip>:8081/`
 
 ### Labeling with labelImg
 
@@ -60,18 +72,20 @@ ensure you copy first all your images into `images` directory and let LabelImg t
 ### Step 2 - Creating TFRecords from the LabelImg xml data
 
 #### xml to csv
-[Raccoon dataset](https://github.com/datitran/raccoon_dataset) downloaded xml_to_csv.py and put it into my repository - with adaptations for my repo. After conversion the aforementioned folder and path values are gone in the csv.
+[Raccoon dataset](https://github.com/datitran/raccoon_dataset) downloaded xml_to_csv.py and put it into my repository - with adaptations for my repo. After conversion the aforementioned folder and path values are gone in the csv. 
 Imho `xml_to_csv.py` is a bit "hardcoded". 
-- It contains the directory to search for the xml files
-- will put all xml into one csv (no train/test splitting)
-- the csv outfile is saved to hardcoded name
+1. cd to `gitbase`
+2. edit xml_to_csv.py to have the correct directory to the images
+3. set the output filename (`train`)
+4. invoke `python .\scripts\xml_to_csv.py`
+
 
 #### csv to TFRecords
 I use [this script](https://github.com/datitran/raccoon_dataset/blob/master/generate_tfrecord.py) to create TFRecords. Change ` row_label == 'dog' ` 
-Open a anaconda window and switch to your tensorflow virtual env. (you need the tensorflow package installed), run (from within `$gitbase`/images ) 
+Open a anaconda window and switch to your tensorflow virtual env. (you need the tensorflow package installed), run (from within `$gitbase`/images/train ) 
 
 ```
-python ..\scripts\generate_tfrecord.py --csv_input=..\data\train.csv --output_path=..\data\train.record
+python ..\..\scripts\generate_tfrecord.py --csv_input=train.csv --output_path=..\..\data\train.record
 ``` 
 
 _I needed to do this from within the images directory as tensorflow starts reading the different jpg files_
@@ -82,7 +96,12 @@ Save it into dir `training`. I also download the model itself (`ssd_mobilenet_v1
 
 Put `object-detection.pbtxt` into dir `data`
 
-I follow the details steps from my selected [tutorial](https://becominghuman.ai/tensorflow-object-detection-api-tutorial-training-and-evaluating-custom-object-detector-ed2594afcf73) - I leave batch_size (as I have tf w/ gpu).
+I follow the details steps from my selected [tutorial](https://becominghuman.ai/tensorflow-object-detection-api-tutorial-training-and-evaluating-custom-object-detector-ed2594afcf73) - I leave batch_size (as I have tf w/ gpu. you might have to select a lower value when you run out of (GPU)-memory). But I experimented with size smaller than 24 and the loss did vary quite a lot wheras with 24 it became decreasing in a stable way.
+
+Four round 2 (training again):
+1. Now, copy `data/`, `images/train` (to images) directories to `models/research/object-detection` directory. If it prompts to merge the directory, merge it.
+
+Then cd to the `models/research/object-detection` directory
 
 from within your anaconda prompt, start training with (use forward slashes even on Windows)
 ```
@@ -127,7 +146,7 @@ eval_config: {
 #To visualize the eval results
 tensorboard --logdir=eval
 
-#TO visualize the training results
+#To visualize the training results
 tensorboard --logdir=training
 ```
 
