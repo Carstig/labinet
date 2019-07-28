@@ -15,12 +15,12 @@ def get_tensor_dict(graph):
             tensor_name = key + ':0'
             #print(f'get tensor:{tensor_name}')
             if tensor_name in all_tensor_names:
-              print(f'set: {tensor_name}')
+              print('set: {}'.format(tensor_name))
               tensor_dict[key] = graph.get_tensor_by_name(tensor_name)
     return tensor_dict        
 
 def set_detection_masks(image_width, image_height, tensor_dict):
-    print(f"tensor:0 for image.shape=(x={image_width},y={image_height})")
+    print("tensor:0 for image.shape=(x={},y={})".format(image_width,image_height))
     if 'detection_masks' in tensor_dict:
         # The following processing is only for single image
         detection_boxes = tf.squeeze(tensor_dict['detection_boxes'], [0])
