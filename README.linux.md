@@ -20,7 +20,7 @@ docker build --rm -t carstig/labinet_trainer . --no-cache=true
 either use `nvidia-docker` or `docker --runtime=nvidia` :
 
 ```
-$> nvidia-docker run -u $(id -u):$(id -g) -it --mount type=bind,source=/home/cgreiner/python/object_detection/tensorflow-models,target=/home/docker/tensorflow-models --rm --runtime=nvidia carstig/labinet_trainer /bin/bash
+$> nvidia run --gpus all -it --mount type=bind,source=/home/cgreiner/python/object_detection/tensorflow-models,target=/home/docker/tensorflow-models --rm --runtime=nvidia carstig/labinet_trainer /bin/bash
 ``` 
 
 from within this shell I do:
