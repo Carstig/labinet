@@ -33,6 +33,7 @@ def xml_to_csv(path):
 def main():
     directory = 'train'
     filename = 'train.csv'
+    # ...%gitbase/images/train :
     image_path = os.path.join(os.getcwd(), 'images', directory)
     xml_df = xml_to_csv(image_path)
     xml_df.to_csv(f'{image_path}/{filename}', index=None)

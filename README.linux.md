@@ -1,14 +1,36 @@
 # Runnning Labinet Stuff on Linux Ubuntu 18.0.4
 
 
-# next todo:
 
-- ssh setup / github
-- debug CUDA problem
-  - done NEXT TODO: rebuild docker image (and see if we can install cocoapi)
-  - done then run docker image and use instead of train.py the script model_main.py >> same fail (CUDNN initilization fail)
-  - TF 1.13/14 require CUDA 10.0 (i have 10.1) --> downgrade to 10.0
-  - although I have now cuda-10 in /usr/lib/cuda - nvidia-smi show 10.1 ... 
+current issue(s)/todos
+1. start retraining from scratch with new "2 label data set"
+    1. create new TFRecords : DONE -> Training
+        - relabeled images are in /home/cgreiner/python/object_detection/labinet/images/train
+        - got images/train/train.csv
+        - adapt generate_tfrecord.py
+            - class_text_to_int ... 1,2  which value?
+        - run generate_tfrecord.py
+          -> FileNotFoundError : fixed - type in csv_input param
+        - create records in : /home/cgreiner/python/object_detection/labinet/images/train/../../data/train.record
+    2. Step 3 - Training
+        - 
+
+
+solved issues
+1. relabeled images (check where) to have 2 classes
+1. train.py results in No module name 'pil'
+    - strange as docker img uses apt-get install python-pil
+    - pip install PIL / pil fails (could not find a version...)
+    - need to find out why after apt-get PIL is not found
+    - solved: pip install pillow
+    - added to Dockerfile
+1. train.py results in No module name object_detection
+    - sounds like PYTHONPATH is not set correctly
+    - solved by setting PYTHONPATH to include ...tensorflow-models/research/object_detection
+1. done NEXT TODO: rebuild docker image (and see if we can install cocoapi)
+1. done then run docker image and use instead of train.py the script model_main.py >> same fail (CUDNN initilization fail)
+1. TF 1.13/14 require CUDA 10.0 (i have 10.1) --> downgrade to 10.0
+1. although I have now cuda-10 in /usr/lib/cuda - nvidia-smi show 10.1 ... 
   
 
 ### build the docker container
@@ -17,15 +39,20 @@ cd <path to dockerfile>
 docker build --rm -t carstig/labinet_trainer . --no-cache=true
 ```
 ### run your container
-either use `nvidia-docker` or `docker --runtime=nvidia` :
+either use `nvidia-docker` or `docker --runtime=nvidia` or (with version 1.40) `docker run --gpus all` :
 
 ```
-$> nvidia run --gpus all -it --mount type=bind,source=/home/cgreiner/python/object_detection/tensorflow-models,target=/home/docker/tensorflow-models --rm --runtime=nvidia carstig/labinet_trainer /bin/bash
+$> docker run --gpus all -it --mount type=bind,source=/home/cgreiner/python/object_detection/tensorflow-models,target=/home/docker/tensorflow-models --rm  carstig/labinet_trainer /bin/bash
 ``` 
+
+_This command relies on a tensorflow-models clone in `/home/cgreiner/python/object_detection/tensorflow-models`_
+
 
 from within this shell I do:
 ```
-cd .../tensorflow-models/research/object-detection
+cd .../tensorflow-models/research
+export PYTHONPATH=${PYTHONPATH}:`pwd`:`pwd`/object_detection:`pwd`/slim
+cd object-detection
 python train.py --logtostderr --train_dir=training --pipeline_config_path=training/ssd_mobilenet_v1_coco.config
 ```
 
@@ -49,7 +76,7 @@ use Ubuntu 18.0.2. I basically followed the following two blogs to first match t
 
 [Running Tensorflow with Docker](https://winsmarts.com/easiest-way-to-setup-a-tensorflow-python3-environment-with-docker-5fc3ec0f6df1)
 
-`$> nvidia-docker run tensorflow/tensorflow:latest-gpu-py3` 
+`$> docker --gpus all run tensorflow/tensorflow:latest-gpu-py3` 
 
 built the docker file, ran it and started interactive using vscode:
 also started image using nvidia-docker
