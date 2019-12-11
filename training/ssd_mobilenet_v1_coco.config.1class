@@ -7,8 +7,7 @@
 
 model {
   ssd {
-    # each dog has it's own class
-    num_classes: 2
+    num_classes: 1
     box_coder {
       faster_rcnn_box_coder {
         y_scale: 10.0
@@ -131,8 +130,8 @@ model {
       batch_non_max_suppression {
         score_threshold: 1e-8
         iou_threshold: 0.6
-        # I have only 2 dogs! - each with it's own class
-        max_detections_per_class: 1
+        # I have only 2 dogs!
+        max_detections_per_class: 2
         max_total_detections: 2
       }
       score_converter: SIGMOID
@@ -145,7 +144,7 @@ train_config: {
   # 24 worked loss is converging much better than 11
   # - 24 started to fail on higher training steps (>100k)
   # 11 worked but loss did vary quite a lot
-  batch_size: 28
+  batch_size: 24
   optimizer {
     rms_prop_optimizer: {
       learning_rate: {

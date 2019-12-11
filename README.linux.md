@@ -13,7 +13,10 @@ current issue(s)/todos
           -> FileNotFoundError : fixed - type in csv_input param
         - create records in : /home/cgreiner/python/object_detection/labinet/images/train/../../data/train.record
     2. Step 3 - Training
-        - 
+        - unpack model + cp into train
+        - edit model.config for 2 classes, cp into trainining
+        - cp labinet/images/train to tf-models...object_detection/train
+        - start training -> see "run your container"
 
 
 solved issues
