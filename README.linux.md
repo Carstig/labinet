@@ -17,6 +17,7 @@ current issue(s)/todos
         - edit model.config for 2 classes, cp into trainining
         - cp labinet/images/train to tf-models...object_detection/train
         - start training -> see "run your container"
+    3. continue training / tensorboard -> get loss down / evaluate training
 
 
 solved issues
