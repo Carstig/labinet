@@ -18,6 +18,7 @@ current issue(s)/todos
         - cp labinet/images/train to tf-models...object_detection/train
         - start training -> see "run your container"
     3. continue training / tensorboard -> get loss down / evaluate training
+    4. export model
 
 
 solved issues
@@ -42,6 +43,7 @@ solved issues
 cd <path to dockerfile>
 docker build --rm -t carstig/labinet_trainer . --no-cache=true
 ```
+## Training
 ### run your container
 either use `nvidia-docker` or `docker --runtime=nvidia` or (with version 1.40) `docker run --gpus all` :
 
@@ -60,11 +62,14 @@ cd object-detection
 python train.py --logtostderr --train_dir=training --pipeline_config_path=training/ssd_mobilenet_v1_coco.config
 ```
 
-Fails with 
+## Export Model
+run docker as above cd to `...research` and fix the `PYTHONPATH` 
 ```
-see ../train.log
+cd ...tensorflow-models/research/object_detection
+$> python export_inference_graph.py --input_type image_tensor --pipeline_config_path training/ssd_mobilenet_v1_coco.config --trained_checkpoint_prefix training/model.ckpt-91348 --output_directory inference_graph
 ```
 
+SavedModel will be written to: `inference_graph/saved_model/saved_model.pb` 
 
 
 # installing tensorflow
