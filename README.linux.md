@@ -58,7 +58,7 @@ from within this shell I do:
 ```
 cd .../tensorflow-models/research
 export PYTHONPATH=${PYTHONPATH}:`pwd`:`pwd`/object_detection:`pwd`/slim
-cd object-detection
+cd object_detection
 python train.py --logtostderr --train_dir=training --pipeline_config_path=training/ssd_mobilenet_v1_coco.config
 ```
 
@@ -70,6 +70,9 @@ $> python export_inference_graph.py --input_type image_tensor --pipeline_config_
 ```
 
 SavedModel will be written to: `inference_graph/saved_model/saved_model.pb` 
+
+
+## Inference / Use
 
 
 # installing tensorflow
